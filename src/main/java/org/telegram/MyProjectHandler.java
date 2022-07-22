@@ -12,8 +12,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class MyProjectHandler extends AbilityBot{
 
 
-    protected MyProjectHandler(String botToken, String botUsername) {
-        super(botToken, botUsername);
+    protected MyProjectHandler() {
+        super(BotConfig.TOKENMYPROJECT, BotConfig.USERNAMEMYPROJECT);
     }
 
     @Override

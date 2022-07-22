@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import static org.telegram.abilitybots.api.objects.Flag.*;
+import static org.telegram.abilitybots.api.objects.Flag.TEXT;
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 
@@ -31,14 +31,48 @@ public class HelloBot extends AbilityBot {
         return 123456789;
     }
 
+    //that's handle a free text input
+    @Override
+    public void onUpdateReceived(Update update) {
+
+        if (update.hasMessage()) {
+            Message message = update.getMessage();
+
+            //check if the message has text. it could also  contain for example a location ( message.hasLocation() )
+            if (message.hasText()) {
+                //create a object that contains the information to send back the message
+                SendMessage sendMessageRequest = new SendMessage();
+
+
+                sendMessageRequest.setChatId(message.getChatId().toString()); //who should get the message? the sender from which we got the message...
+
+                try {
+                    sendMessageRequest.setText("you are: " + message.getChat().getFirstName());
+                    execute(sendMessageRequest);
+                } catch (TelegramApiException e) {
+                    System.out.println(e.getMessage());
+                }
+
+            }//end if()
+        }//end  if()
+
+    }//end onUpdateRec
+
+
+    //ability handles a ready words such as - /hello or - /by
+
     public Ability sayHelloWorld() {
+
         return Ability
                 .builder()
                 .name("hello")
                 .info("says hello world!")
                 .locality(ALL)
                 .privacy(PUBLIC)
-                .action(ctx -> silent.send("Hello world!", ctx.chatId()))
+                .action(ctx -> {
+
+                    silent.send("Hello "+ctx.user().getFirstName()+"! ", ctx.chatId());
+                })
                 .build();
     }
 
@@ -75,15 +109,15 @@ public class HelloBot extends AbilityBot {
                 .locality(ALL)
                 .input(0)
                 .action(ctx -> {
-                    try {
 
-                        SendMessage message = new SendMessage();
-                        message.setText("Daaaaang, what a nice photo!" + ctx.chatId());
-                        sender.execute(message);
 
-                    } catch (TelegramApiException e) {
-                        System.out.println(e.getMessage());
-                    }
+                    SendMessage message = new SendMessage();
+
+                    message.setText("hi to you!");
+
+//                        sender.execute(message);
+                    silent.send(message.getText(), ctx.chatId());
+
                 }).build();
     }
 
@@ -146,6 +180,7 @@ public class HelloBot extends AbilityBot {
     private Predicate<Update> isReplyToBot() {
         return upd -> upd.getMessage().getReplyToMessage().getFrom().getUserName().equalsIgnoreCase(getBotUsername());
     }
+
 
     @VisibleForTesting
     void setSender(MessageSender sender) {
