@@ -1,26 +1,38 @@
 package org.telegram.extensions;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.vdurmont.emoji.Emoji;
+import com.vdurmont.emoji.EmojiManager;
+import com.vdurmont.emoji.EmojiParser;
 import org.telegram.BotConfig;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.sender.MessageSender;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.utils.CurrencyDetails;
 
 import java.io.File;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static java.lang.System.out;
 import static org.telegram.abilitybots.api.objects.Flag.TEXT;
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 
 public class HelloBot extends AbilityBot {
+
+    private static Map<String, Double> exchange = new HashMap<>();
+    private static final DecimalFormat decimal = new DecimalFormat("#.###");
 
     public HelloBot() {
         super(BotConfig.TOKENMYPROJECT, BotConfig.USERNAMEMYPROJECT);
@@ -32,31 +44,55 @@ public class HelloBot extends AbilityBot {
     }
 
     //that's handle a free text input
-    @Override
-    public void onUpdateReceived(Update update) {
 
-        if (update.hasMessage()) {
-            Message message = update.getMessage();
-
-            //check if the message has text. it could also  contain for example a location ( message.hasLocation() )
-            if (message.hasText()) {
-                //create a object that contains the information to send back the message
-                SendMessage sendMessageRequest = new SendMessage();
-
-
-                sendMessageRequest.setChatId(message.getChatId().toString()); //who should get the message? the sender from which we got the message...
-
-                try {
-                    sendMessageRequest.setText("you are: " + message.getChat().getFirstName());
-                    execute(sendMessageRequest);
-                } catch (TelegramApiException e) {
-                    System.out.println(e.getMessage());
-                }
-
-            }//end if()
-        }//end  if()
-
-    }//end onUpdateRec
+//    @Override
+//    public void onUpdateReceived(Update update) {
+//
+//        if (update.hasMessage()) {
+//            Message message = update.getMessage();
+//
+//            if (message.hasText()) {
+//
+//
+//                String smile = ":smile:";
+//
+//                String smileUnicode = EmojiParser.parseToUnicode(smile);
+//
+////                SendMessage sendMessageRequest = new SendMessage();
+////
+////                sendMessageRequest.setChatId(message.getChatId().toString());
+//
+//                ArrayList<String> wordArrayList = new ArrayList<>();
+//                for (String word : message.getText().split(" ")) {
+//                    wordArrayList.add(word);
+//                }
+//
+//                CurrencyDetails currencyDetails = validate(wordArrayList);
+//
+//                double res = calculate(currencyDetails);
+//
+//                printRes(res, currencyDetails);
+//
+//                SendMessage resultMsg = new SendMessage();
+//
+//                resultMsg.setChatId(message.getChatId().toString());
+//
+//
+//                try {
+//                resultMsg.setText(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry()+" "+smileUnicode);
+//
+////                    sendMessageRequest.setText("you are: " + message.getChat().getFirstName()+" "+smileUnicode);
+////                    execute(sendMessageRequest);
+//
+//                    execute(resultMsg);
+//                } catch (TelegramApiException e) {
+//                    System.out.println(e.getMessage());
+//                }
+//
+//            }
+//        }
+//
+//    }
 
 
     //ability handles a ready words such as - /hello or - /by
@@ -71,7 +107,7 @@ public class HelloBot extends AbilityBot {
                 .privacy(PUBLIC)
                 .action(ctx -> {
 
-                    silent.send("Hello "+ctx.user().getFirstName()+"! ", ctx.chatId());
+                    silent.send("Hello " + ctx.user().getFirstName() + "! ", ctx.chatId());
                 })
                 .build();
     }
@@ -186,4 +222,59 @@ public class HelloBot extends AbilityBot {
     void setSender(MessageSender sender) {
         this.sender = sender;
     }
+
+    public static void printRes(double res, CurrencyDetails currencyDetails) {
+        out.println(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry());
+    }
+
+    public static double calculate(CurrencyDetails currencyDetails) {
+
+        String fromCountry = currencyDetails.getFromCountry();
+
+        String toCountry = currencyDetails.getToCountry();
+
+        exchange.put("usa", 1d);
+        exchange.put("israel", 3.452);
+        exchange.put("brazil", 5.474);
+        exchange.put("canada", 1.287);
+
+
+        double from = 0;
+        double to = 0;
+        double res = 0;
+
+        if (exchange.containsKey(fromCountry)) {
+            from += exchange.get(fromCountry);
+        }
+
+        if (exchange.containsKey(toCountry)) {
+            to += exchange.get(toCountry);
+        }
+
+//
+//        if (from > to) {
+//            res += to/from;
+//            return resc;
+//        }
+        res += to / from;
+        return res * currencyDetails.getAmountCurrency();
+    }
+
+    public static CurrencyDetails validate(ArrayList<String> list) {
+
+        String toCountry = "";
+
+        String fromCountry = "";
+
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).equalsIgnoreCase("from")) {
+                fromCountry += list.get(i + 1);
+            }
+            if (list.get(i).equalsIgnoreCase("to")) {
+                toCountry += list.get(i + 1);
+            }
+        }
+        return new CurrencyDetails(toCountry, fromCountry, Double.parseDouble(list.get(2)));
+    }
+
 }
