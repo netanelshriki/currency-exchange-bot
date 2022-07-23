@@ -45,54 +45,59 @@ public class HelloBot extends AbilityBot {
 
     //that's handle a free text input
 
-//    @Override
-//    public void onUpdateReceived(Update update) {
+    @Override
+    public void onUpdateReceived(Update update) {
+
+        if (update.hasMessage()) {
+            Message message = update.getMessage();
+
+            if (message.hasText()) {
+
+
+                String smile = ":smile:";
+
+                String smileUnicode = EmojiParser.parseToUnicode(smile);
+
+//                SendMessage sendMessageRequest = new SendMessage();
 //
-//        if (update.hasMessage()) {
-//            Message message = update.getMessage();
-//
-//            if (message.hasText()) {
-//
-//
-//                String smile = ":smile:";
-//
-//                String smileUnicode = EmojiParser.parseToUnicode(smile);
-//
-////                SendMessage sendMessageRequest = new SendMessage();
-////
-////                sendMessageRequest.setChatId(message.getChatId().toString());
-//
-//                ArrayList<String> wordArrayList = new ArrayList<>();
-//                for (String word : message.getText().split(" ")) {
-//                    wordArrayList.add(word);
-//                }
-//
-//                CurrencyDetails currencyDetails = validate(wordArrayList);
-//
-//                double res = calculate(currencyDetails);
-//
-//                printRes(res, currencyDetails);
-//
-//                SendMessage resultMsg = new SendMessage();
-//
-//                resultMsg.setChatId(message.getChatId().toString());
-//
-//
-//                try {
-//                resultMsg.setText(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry()+" "+smileUnicode);
-//
-////                    sendMessageRequest.setText("you are: " + message.getChat().getFirstName()+" "+smileUnicode);
-////                    execute(sendMessageRequest);
-//
-//                    execute(resultMsg);
-//                } catch (TelegramApiException e) {
-//                    System.out.println(e.getMessage());
-//                }
-//
-//            }
-//        }
-//
-//    }
+//                sendMessageRequest.setChatId(message.getChatId().toString());
+
+                String fixedMsg = message.getText().trim().replaceAll(" +", " ").toLowerCase();
+                out.println("------------------------------------------");
+                out.println(fixedMsg);
+                out.println("------------------------------------------");
+
+                ArrayList<String> wordArrayList = new ArrayList<>();
+                for (String word : fixedMsg.split(" ")) {
+                    wordArrayList.add(word);
+                }
+
+                CurrencyDetails currencyDetails = validate(wordArrayList);
+
+                double res = calculate(currencyDetails);
+
+                printRes(res, currencyDetails);
+
+                SendMessage resultMsg = new SendMessage();
+
+                resultMsg.setChatId(message.getChatId().toString());
+
+
+                try {
+                resultMsg.setText(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry().toLowerCase() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry().toLowerCase()+" "+smileUnicode);
+
+//                    sendMessageRequest.setText("you are: " + message.getChat().getFirstName()+" "+smileUnicode);
+//                    execute(sendMessageRequest);
+
+                    execute(resultMsg);
+                } catch (TelegramApiException e) {
+                    System.out.println(e.getMessage());
+                }
+
+            }
+        }
+
+    }
 
 
     //ability handles a ready words such as - /hello or - /by
@@ -224,14 +229,14 @@ public class HelloBot extends AbilityBot {
     }
 
     public static void printRes(double res, CurrencyDetails currencyDetails) {
-        out.println(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry());
+        out.println(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry().toLowerCase() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry().toLowerCase());
     }
 
     public static double calculate(CurrencyDetails currencyDetails) {
 
-        String fromCountry = currencyDetails.getFromCountry();
+        String fromCountry = currencyDetails.getFromCountry().toLowerCase();
 
-        String toCountry = currencyDetails.getToCountry();
+        String toCountry = currencyDetails.getToCountry().toLowerCase();
 
         exchange.put("usa", 1d);
         exchange.put("israel", 3.452);
