@@ -4,6 +4,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.vdurmont.emoji.Emoji;
 import com.vdurmont.emoji.EmojiManager;
 import com.vdurmont.emoji.EmojiParser;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
 import org.telegram.BotConfig;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.Ability;
@@ -15,14 +17,15 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.utils.Countries;
 import org.telegram.utils.CurrencyDetails;
+import org.telegram.utils.ExchangeConvertor;
 
 import java.io.File;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static java.lang.System.out;
 import static org.telegram.abilitybots.api.objects.Flag.TEXT;
@@ -32,7 +35,18 @@ import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 public class HelloBot extends AbilityBot {
 
     private static Map<String, Double> exchange = new HashMap<>();
+
     private static final DecimalFormat decimal = new DecimalFormat("#.###");
+
+    private RestTemplate restTemplate = new RestTemplate();
+
+    private static Map<String, String> countries = new HashMap<>();
+
+    private static final String smile = ":smile:";
+
+    private static final String smileUnicode = EmojiParser.parseToUnicode(smile);
+
+    private final String URL = "https://v6.exchangerate-api.com/v6/6845abc2363b7dc5ff117844/latest/USD";
 
     public HelloBot() {
         super(BotConfig.TOKENMYPROJECT, BotConfig.USERNAMEMYPROJECT);
@@ -49,28 +63,21 @@ public class HelloBot extends AbilityBot {
     public void onUpdateReceived(Update update) {
 
         if (update.hasMessage()) {
+
             Message message = update.getMessage();
 
             if (message.hasText()) {
 
-
-                String smile = ":smile:";
-
-                String smileUnicode = EmojiParser.parseToUnicode(smile);
-
-//                SendMessage sendMessageRequest = new SendMessage();
-//
-//                sendMessageRequest.setChatId(message.getChatId().toString());
-
                 String fixedMsg = message.getText().trim().replaceAll(" +", " ").toLowerCase();
-                out.println("------------------------------------------");
-                out.println(fixedMsg);
-                out.println("------------------------------------------");
 
-                ArrayList<String> wordArrayList = new ArrayList<>();
-                for (String word : fixedMsg.split(" ")) {
-                    wordArrayList.add(word);
-                }
+                ExchangeConvertor exchangeConvertor = restTemplate.getForObject(URL, ExchangeConvertor.class);
+
+                assert exchangeConvertor != null;
+
+                exchange = exchangeConvertor.getConversionRates();
+
+
+                List<String> wordArrayList = new ArrayList<>(Arrays.asList(fixedMsg.split(" ")));
 
                 CurrencyDetails currencyDetails = validate(wordArrayList);
 
@@ -84,7 +91,9 @@ public class HelloBot extends AbilityBot {
 
 
                 try {
-                resultMsg.setText(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry().toLowerCase() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry().toLowerCase()+" "+smileUnicode);
+
+
+                    resultMsg.setText(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry().toLowerCase() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry().toLowerCase() + " " + smileUnicode);
 
 //                    sendMessageRequest.setText("you are: " + message.getChat().getFirstName()+" "+smileUnicode);
 //                    execute(sendMessageRequest);
@@ -234,29 +243,41 @@ public class HelloBot extends AbilityBot {
 
     public static double calculate(CurrencyDetails currencyDetails) {
 
+        countries = Arrays.stream(Countries.values()).collect(Collectors.toMap(Enum::toString, v -> v.extention));
+
         String fromCountry = currencyDetails.getFromCountry().toLowerCase();
 
         String toCountry = currencyDetails.getToCountry().toLowerCase();
 
-        exchange.put("usa", 1d);
-        exchange.put("israel", 3.452);
-        exchange.put("brazil", 5.474);
-        exchange.put("canada", 1.287);
+        String fromCountryIso = countries.get(fromCountry);
+        String toCountryIso = countries.get(toCountry);
+        out.println("----------------------------------");
+        out.println(fromCountryIso);
+        out.println(toCountryIso);
+
+        out.println("----------------------------------");
+//        exchange.put("usa", 1d);
+//        exchange.put("israel", 3.452);
+//        exchange.put("brazil", 5.474);
+//        exchange.put("canada", 1.287);
 
 
         double from = 0;
         double to = 0;
         double res = 0;
 
-        if (exchange.containsKey(fromCountry)) {
-            from += exchange.get(fromCountry);
+        if (exchange.containsKey(fromCountryIso)) {
+            from += exchange.get(fromCountryIso);
         }
 
-        if (exchange.containsKey(toCountry)) {
-            to += exchange.get(toCountry);
+        if (exchange.containsKey(toCountryIso)) {
+            to += exchange.get(toCountryIso);
         }
+        out.println("=================================");
+        out.println(from);
+        out.println(to);
+        out.println("=================================");
 
-//
 //        if (from > to) {
 //            res += to/from;
 //            return resc;
@@ -265,7 +286,7 @@ public class HelloBot extends AbilityBot {
         return res * currencyDetails.getAmountCurrency();
     }
 
-    public static CurrencyDetails validate(ArrayList<String> list) {
+    public static CurrencyDetails validate(List<String> list) {
 
         String toCountry = "";
 
