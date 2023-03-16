@@ -10,6 +10,7 @@ import org.telegram.BotConfig;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.sender.MessageSender;
+import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
@@ -22,12 +23,14 @@ import org.telegram.utils.CurrencyDetails;
 import org.telegram.utils.ExchangeConvertor;
 
 import java.io.File;
+import java.lang.annotation.RetentionPolicy;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.lang.System.out;
+import static java.lang.System.setOut;
 import static org.telegram.abilitybots.api.objects.Flag.TEXT;
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
