@@ -96,8 +96,11 @@ public class HelloBot extends AbilityBot {
                 try {
 
 
-                    resultMsg.setText(currencyDetails.getAmountCurrency() + " " + currencyDetails.getFromCountry().toLowerCase() + " currency equals to: " + decimal.format(res) + " of " + currencyDetails.getToCountry().toLowerCase() + " " + smileUnicode);
+                    resultMsg.setText("Hello "+message.getChat().getFirstName()+(message.getChat().getLastName()!=null?" "+message.getChat().getLastName():"")+"! "+currencyDetails.getAmountCurrency()
+                            + " " + currencyDetails.getFromCountry().toLowerCase() + " currency equals to: " + decimal.format(res) + " of "
+                            + currencyDetails.getToCountry().toLowerCase() + " " + smileUnicode);
 
+//                    SendMessage sendMessageRequest= new SendMessage();
 //                    sendMessageRequest.setText("you are: " + message.getChat().getFirstName()+" "+smileUnicode);
 //                    execute(sendMessageRequest);
 
