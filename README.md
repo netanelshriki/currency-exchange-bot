@@ -1,2 +1,2 @@
-# first-telegram-bot
+# currency-exchange-bot
 my first telegram bot :)
